@@ -15,7 +15,7 @@ func run(opts cliopts, args []string) int {
 	}
 
 	for _, arg := range args {
-		err := do(arg)
+		err := do(arg, opts.keepWorkdir)
 
 		if err == nil {
 			fmt.Printf("resized %v\n", arg)
@@ -27,9 +27,13 @@ func run(opts cliopts, args []string) int {
 	return 0
 }
 
-func do(filename string) error {
+func do(filename string, keepWorkdir bool) error {
 	workdir, framesOriginalDir, framesScaledDir, err := createWorkdir()
-	defer removeWorkdir(workdir)
+
+	if !keepWorkdir {
+		defer removeWorkdir(workdir)
+	}
+
 	if err != nil {
 		return fmt.Errorf("error creating workdir: %w", err)
 	}
@@ -42,13 +46,23 @@ func do(filename string) error {
 		return fmt.Errorf("error scaling frames: %w", err)
 	}
 
+	paletteFilename := makePaletteFilename(workdir)
+
+	if err := savePalette(framesScaledDir, paletteFilename); err != nil {
+		return fmt.Errorf("error saving palette: %w", err)
+	}
+
 	outputFilename := makeOutputFilename(filename)
 
-	if err := assembleOutput(framesScaledDir, outputFilename); err != nil {
+	if err := assembleOutput(framesScaledDir, paletteFilename, outputFilename); err != nil {
 		return fmt.Errorf("error assembling output: %w", err)
 	}
 
 	return nil
+}
+
+func makePaletteFilename(workdir string) string {
+	return filepath.Join(workdir, "palette.png")
 }
 
 func makeOutputFilename(filename string) string {

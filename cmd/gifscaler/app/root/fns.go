@@ -46,7 +46,24 @@ func scaleFrames(source, destination string) error {
 	return nil
 }
 
-func assembleOutput(framesDirname, outputFilename string) error {
+func savePalette(framesDirname, paletteFilename string) error {
+	cmd := exec.Command(
+		"ffmpeg",
+		"-i",
+		framesDirname+"/frame_%d-scaled.png",
+		"-vf",
+		"palettegen",
+		paletteFilename,
+	)
+
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func assembleOutput(framesDirname, paletteFilename, outputFilename string) error {
 	fmt.Println(framesDirname + "/frame_%d-scaled.png")
 	fmt.Println(outputFilename)
 
@@ -54,8 +71,13 @@ func assembleOutput(framesDirname, outputFilename string) error {
 		"ffmpeg",
 		"-i",
 		framesDirname+"/frame_%d-scaled.png",
+		"-i",
+		paletteFilename,
+		"-lavfi",
+		"paletteuse,setpts=6*PTS",
 		"-r",
 		"16",
+		"-y",
 		outputFilename,
 	)
 
