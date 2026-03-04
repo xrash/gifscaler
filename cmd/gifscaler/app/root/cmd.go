@@ -39,7 +39,7 @@ func CreateCmd() *cobra.Command {
 	)
 
 	cmd.Flags().BoolVarP(
-		&c.options.keepWorkdir,
+		&c.options.usePalette,
 		"use-palette",
 		"",
 		true,
